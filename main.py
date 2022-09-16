@@ -12,9 +12,18 @@ def parse_book_page(response):
     soup_text = soup.find('body').find('h1')
     content_text = soup_text.text
     title = "".join((content_text.split('::'))[0].strip())
-    title = (f"{sanitize_filename(title)}")
-    print(title)
-    return soup, title
+    title = f"{sanitize_filename(title)}"
+    author = "".join((content_text.split('::'))[1].strip())
+    author = f"{sanitize_filename(author)}"
+    soup_genres = soup.find_all('span', class_='d_book')
+    genres = [genre.text for genre in soup_genres]
+    genres = ":".join(genres).lstrip('Жанр книги:').strip()
+    parse_book = {
+                  "title": title,
+                  "author": author,
+                  "genres": genres,
+                  }
+    return soup, parse_book
 
 
 def check_for_redirect(response):
@@ -42,7 +51,8 @@ def fetch_download_response(book_number):
     return response
 
 
-def download_comments(soup):
+def download_comments(soup, book_number, folder):
+    os.makedirs(folder, exist_ok=True)
     soup_comments = soup.find_all(class_='texts')
     comments_list = [comment.text for comment in soup_comments]
     raw_comments = []
@@ -50,7 +60,10 @@ def download_comments(soup):
         comment = comment.split(')')
         raw_comments.append(comment[-1])
     comments = "\n".join(raw_comments)
-    print(comments)
+    filename = f"{book_number}.txt"
+    filepath = os.path.join(folder, filename)
+    with open(filepath, 'w') as file:
+        file.write(comments)
 
 
 def download_image(soup, book_number, folder):
@@ -76,16 +89,20 @@ def download_txt(response, title, folder):
 def main():
     txt_folder = 'books/'
     image_folder = 'image/'
+    comments_folder = 'comments/'
     books_count = 10
     for book_number in range(1, books_count+1):
         txt_response = fetch_download_response(book_number)
         page_response = fetch_page_response(book_number)
         try:
             check_for_redirect(page_response)
-            soup, title = parse_book_page(page_response)
-            download_txt(txt_response, title, txt_folder)
+            soup, parse_page = parse_book_page(page_response)
+            download_txt(txt_response, parse_page['title'], txt_folder)
             download_image(soup, book_number, image_folder)
-            download_comments(soup)
+            download_comments(soup, book_number, comments_folder)
+            print("Заголовок: ", parse_page['title'])
+            print("Автор: ", parse_page['author'])
+            print("Жанр: ", parse_page['genres'])
         except:
             pass
 
