@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup
 import collections
 collections.Callable = collections.abc.Callable
 from urllib.parse import urljoin
+import argparse
 
 
 def parse_book_page(response):
@@ -26,8 +27,9 @@ def parse_book_page(response):
     return soup, parse_book
 
 
-def check_for_redirect(response):
-    if response.history == []:
+def check_for_redirect(download_response, page_response):
+    url = "https://tululu.org/"
+    if page_response.url != url and download_response.url != url:
         pass
     else:
         raise requests.exceptions.HTTPError()
@@ -62,8 +64,11 @@ def download_comments(soup, book_number, folder):
     comments = "\n".join(raw_comments)
     filename = f"{book_number}.txt"
     filepath = os.path.join(folder, filename)
-    with open(filepath, 'w') as file:
-        file.write(comments)
+    if comments:
+        with open(filepath, 'w') as file:
+            file.write(comments)
+    else:
+        pass
 
 
 def download_image(soup, book_number, folder):
@@ -87,17 +92,24 @@ def download_txt(response, title, folder):
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('start_id',
+                        help='Required argument')
+    parser.add_argument('end_id',
+                        help='Required argument')
+    args = parser.parse_args()
+    start_args = args.start_id
+    end_args = args.end_id
     txt_folder = 'books/'
     image_folder = 'image/'
     comments_folder = 'comments/'
-    books_count = 10
-    for book_number in range(1, books_count+1):
-        txt_response = fetch_download_response(book_number)
+    for book_number in range(int(start_args), int(end_args) + 1):
+        download_response = fetch_download_response(book_number)
         page_response = fetch_page_response(book_number)
         try:
-            check_for_redirect(page_response)
+            check_for_redirect(download_response, page_response)
             soup, parse_page = parse_book_page(page_response)
-            download_txt(txt_response, parse_page['title'], txt_folder)
+            download_txt(download_response, parse_page['title'], txt_folder)
             download_image(soup, book_number, image_folder)
             download_comments(soup, book_number, comments_folder)
             print("Заголовок: ", parse_page['title'])
