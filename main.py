@@ -2,10 +2,10 @@ import os
 import requests
 from pathvalidate import sanitize_filename
 from bs4 import BeautifulSoup
-import collections
-collections.Callable = collections.abc.Callable
 from urllib.parse import urljoin
 import argparse
+import collections
+collections.Callable = collections.abc.Callable
 
 
 def parse_book_page(response):
@@ -74,7 +74,7 @@ def download_comments(soup, book_number, folder):
 def download_image(soup, book_number, folder):
     os.makedirs(folder, exist_ok=True)
     url = f"https://tululu.org/b{book_number}/"
-    soup_img = soup.find(class_= 'bookimage').find('img')['src']
+    soup_img = soup.find(class_='bookimage').find('img')['src']
     image_url = urljoin(url, soup_img)
     image_response = requests.get(image_url)
     image_response.raise_for_status()
