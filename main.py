@@ -82,7 +82,7 @@ def main():
         page_response = fetch_page_response(book_number)
         try:
             check_for_redirect(page_response)
-            soup, title = parse_book_page(page_response, book_number)
+            soup, title = parse_book_page(page_response)
             download_txt(txt_response, title, txt_folder)
             download_image(soup, book_number, image_folder)
             download_comments(soup)
