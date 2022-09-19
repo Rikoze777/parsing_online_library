@@ -119,8 +119,10 @@ def main():
             print("Заголовок: ", parse_page['title'])
             print("Автор: ", parse_page['author'])
             print("Жанр: ", parse_page['genres'])
-        except:
-            pass
+        except requests.exceptions.HTTPError:
+            print("Wrong url")
+        except requests.exceptions.ConnectionError:
+            print("Connection error")
 
 
 if __name__ == "__main__":
