@@ -93,9 +93,9 @@ def download_txt(response, title, folder):
 
 def main():
     parser = argparse.ArgumentParser(description="Arguments for start and end parsing")
-    parser.add_argument('start_id',
+    parser.add_argument('start_id', type=int,
                         help='ID of the book to start parsing from')
-    parser.add_argument('end_id',
+    parser.add_argument('end_id', type=int,
                         help='ID of the book to finish parsing from')
     args = parser.parse_args()
     start_args = args.start_id
@@ -103,7 +103,7 @@ def main():
     txt_folder = 'books/'
     image_folder = 'image/'
     comments_folder = 'comments/'
-    for book_number in range(int(start_args), int(end_args) + 1):
+    for book_number in range(start_args, end_args + 1):
         download_response = fetch_download_response(book_number)
         page_response = fetch_page_response(book_number)
         try:
