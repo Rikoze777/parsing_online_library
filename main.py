@@ -2,7 +2,7 @@ import os
 import requests
 from pathvalidate import sanitize_filename
 from bs4 import BeautifulSoup
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlencode
 import argparse
 import collections
 collections.Callable = collections.abc.Callable
@@ -47,8 +47,12 @@ def fetch_page_response(book_number):
 def fetch_download_response(book_number):
     requests.packages.urllib3.disable_warnings(
         requests.packages.urllib3.exceptions.InsecureRequestWarning)
-    url = f"https://tululu.org/txt.php?id={book_number}"
-    response = requests.get(url, verify=False)
+    main_url = f"https://tululu.org/txt.php"
+    params = {
+              "id": book_number,
+              }
+    encoded_params = urlencode(params)
+    response = requests.get(main_url, params=encoded_params, verify=False)
     response.raise_for_status()
     return response
 
