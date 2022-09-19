@@ -92,11 +92,11 @@ def download_txt(response, title, folder):
 
 
 def main():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description="Arguments for start and end parsing")
     parser.add_argument('start_id',
-                        help='Required argument')
+                        help='ID of the book to start parsing from')
     parser.add_argument('end_id',
-                        help='Required argument')
+                        help='ID of the book to finish parsing from')
     args = parser.parse_args()
     start_args = args.start_id
     end_args = args.end_id
