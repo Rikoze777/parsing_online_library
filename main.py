@@ -46,20 +46,11 @@ def check_for_redirect(page_response):
 
 
 def fetch_comments(comments, book_number, folder):
-    try:
-        check_comments(comments)
-        os.makedirs(folder, exist_ok=True)
-        filename = f"{book_number}.txt"
-        filepath = os.path.join(folder, filename)
-        with open(filepath, 'w') as file:
-            file.write(comments)
-    except TypeError:
-        print("No comments")
-
-
-def check_comments(comments):
-    if not comments:
-        raise TypeError
+    os.makedirs(folder, exist_ok=True)
+    filename = f"{book_number}.txt"
+    filepath = os.path.join(folder, filename)
+    with open(filepath, 'w') as file:
+        file.write(comments)
 
 
 def download_image(image_url, folder):
@@ -97,37 +88,38 @@ def main():
     image_folder = 'image/'
     comments_folder = 'comments/'
     for book_number in range(start_args, end_args):
-        book_url = f"https://tululu.org/b{book_number}/"
-        book_response = requests.get(book_url, verify=False)
-        book_response.raise_for_status()
-        download_url = "https://tululu.org/txt.php"
-        params = {
-                  "id": book_number,
-                  }
-        encoded_params = urlencode(params)
-        download_response = requests.get(download_url,
-                                         params=encoded_params,
-                                         verify=False)
-        download_response.raise_for_status()
-        try:
-            check_for_redirect(book_response)
-            check_for_redirect(download_response)
-            book_page = parse_book_page(book_response)
-            download_txt(book_page['title'], download_response, txt_folder)
-            fetch_comments(book_page['comments'],
-                           book_number, comments_folder)
-            download_image(book_page['image_url'], image_folder)
-            print("Заголовок: ", book_page['title'])
-            print("Автор: ", book_page['author'])
-            print("Жанр: ", book_page['genres'])
-        except requests.exceptions.HTTPError:
-            print("Wrong url")
+        while True:
+            try:
+                book_url = f"https://tululu.org/b{book_number}/"
+                book_response = requests.get(book_url, verify=False)
+                book_response.raise_for_status()
+                download_url = "https://tululu.org/txt.php"
+                params = {
+                        "id": book_number,
+                        }
+                encoded_params = urlencode(params)
+                download_response = requests.get(download_url,
+                                                 params=encoded_params,
+                                                 verify=False)
+                download_response.raise_for_status()
+                check_for_redirect(book_response)
+                check_for_redirect(download_response)
+                book_page = parse_book_page(book_response)
+                download_txt(book_page['title'], download_response, txt_folder)
+                if book_page['comments']:
+                    fetch_comments(book_page['comments'],
+                                   book_number, comments_folder)
+                download_image(book_page['image_url'], image_folder)
+                print("Заголовок: ", book_page['title'])
+                print("Автор: ", book_page['author'])
+                print("Жанр: ", book_page['genres'])
+            except requests.exceptions.HTTPError:
+                print("Wrong url")
+            except requests.exceptions.ConnectionError:
+                time.sleep(10)
+            finally:
+                break
 
 
 if __name__ == "__main__":
-    while True:
-        try:
-            main()
-            break
-        except requests.exceptions.ConnectionError:
-            time.sleep(10)
+    main()
