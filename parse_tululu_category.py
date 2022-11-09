@@ -90,16 +90,17 @@ def main():
     # for book_number in range(start_args, end_args):
     while True:
         try:
-            fantastic_url = "https://tululu.org/l55/"
-            response = requests.get(fantastic_url, verify=False)
-            response.raise_for_status()
-            soup = BeautifulSoup(response.text, 'lxml')
-            book_tags = soup.find_all(class_="bookimage", limit=25)
-            for books in book_tags:
-                for book in books:
-                    book_tag = book["href"]
-                    book_url = urljoin(fantastic_url, book_tag)
-                    print(book_url)
+            for page in range(10):
+                fantastic_url = f"https://tululu.org/l55/{page}"
+                response = requests.get(fantastic_url, verify=False)
+                response.raise_for_status()
+                soup = BeautifulSoup(response.text, 'lxml')
+                book_tags = soup.find_all(class_="bookimage", limit=25)
+                for books in book_tags:
+                    for book in books:
+                        book_tag = book["href"]
+                        book_url = urljoin(fantastic_url, book_tag)
+                        print(book_url)
         except requests.exceptions.HTTPError:
             print("Wrong url")
         except requests.exceptions.ConnectionError:
