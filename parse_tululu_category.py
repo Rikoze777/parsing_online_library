@@ -1,13 +1,14 @@
 import os
 import requests
 import time
-from collections import OrderedDict
+import argparse
+import collections
 import json
+from collections import OrderedDict
 from pathvalidate import sanitize_filename
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlencode
-import argparse
-import collections
+from pathlib import Path
 collections.Callable = collections.abc.Callable
 
 
@@ -51,14 +52,6 @@ def check_for_redirect(page_response):
         raise requests.exceptions.HTTPError()
 
 
-def fetch_comments(comments, book_tag, folder):
-    os.makedirs(folder, exist_ok=True)
-    filename = f"{book_tag}.txt"
-    filepath = os.path.join(folder, filename)
-    with open(filepath, 'w') as file:
-        file.write(comments)
-
-
 def download_image(image_url, folder):
     os.makedirs(folder, exist_ok=True)
     image_response = requests.get(image_url)
@@ -76,26 +69,49 @@ def download_txt(title, download_response, folder):
         book.write(download_response.text)
 
 
+def create_argparse():
+    parser = argparse.ArgumentParser(description='''This script will download
+            fantasy books for you from https://tululu.org/''')
+    parser.add_argument('--start_page', type=int,
+                        help='Start page to start parsing from')
+    parser.add_argument('--end_page', nargs='?', type=int,
+                        help='End page to finish parsing from')
+    parser.add_argument('--dest_folder', nargs='?', type=str,
+                        default=Path.cwd(),
+                        help='Folder with parsing results')
+    parser.add_argument('--skip_imgs', action="store_true", default=False,
+                        help='Skip parsing images')
+    parser.add_argument('--skip_txt', action="store_true", default=False,
+                        help='Skip parsing textfiles')
+    parser.add_argument('--json_path', action="store_true", default=Path.cwd(),
+                        help='Folder with parsing json results')
+    return parser
+
+
 def main():
     requests.packages.urllib3.disable_warnings(
         requests.packages.urllib3.exceptions.InsecureRequestWarning)
-    parser = argparse.ArgumentParser(description='''This script will download
-            fantasy books for you from https://tululu.org/''')
-    parser.add_argument('start_page', type=int,
-                        help='Start page to start parsing from')
-    parser.add_argument('end_page', nargs='?', type=int,
-                        help='End page to finish parsing from')
+    parser = create_argparse()
     args = parser.parse_args()
     start_page = args.start_page
     end_page = args.end_page
-    txt_folder = 'books/'
-    image_folder = 'image/'
-    comments_folder = 'comments/'
+    dest_folder = args.dest_folder
+    skip_imgs = args.skip_imgs
+    skip_txt = args.skip_txt
+    json_folder = args.json_path
     books_dump = []
+    txt_folder = Path(dest_folder, 'books/')
+    image_folder = Path(dest_folder, 'images/')
+    if json_folder:
+        os.makedirs(json_folder, exist_ok=True)
+    if not skip_imgs:
+        image_folder.mkdir(parents=True, exist_ok=True)
+    if not skip_txt:
+        txt_folder.mkdir(parents=True, exist_ok=True)
     if not end_page:
         end_page = start_page + 1
-    while True:
-        for page in range(start_page, end_page):
+    for page in range(start_page, end_page):
+        while True:
             fantastic_url = f"https://tululu.org/l55/{page}"
             download_url = "https://tululu.org/txt.php"
             url = "https://tululu.org/"
@@ -122,12 +138,11 @@ def main():
                     check_for_redirect(book_response)
                     check_for_redirect(download_response)
                     book_page = parse_book_page(book_response)
-                    download_txt(book_page['title'],
-                                 download_response, txt_folder)
-                    if book_page['comments']:
-                        fetch_comments(book_page['comments'],
-                                       book_number, comments_folder)
-                    download_image(book_page['image_url'], image_folder)
+                    if not skip_txt:
+                        download_txt(book_page['title'],
+                                     download_response, txt_folder)
+                    if not skip_imgs:
+                        download_image(book_page['image_url'], image_folder)
                     books_dump.append(book_page)
                 except requests.exceptions.HTTPError:
                     print("Wrong url")
@@ -135,11 +150,13 @@ def main():
                 except requests.exceptions.ConnectionError:
                     time.sleep(10)
                     continue
-        with open('books.json', 'a') as dump:
-            json.dump(books_dump,
-                      dump,
-                      ensure_ascii=False,
-                      indent=4)
+            break
+    json_path = os.path.join(json_folder, "books_dump.json")
+    with open(json_path, 'w') as file:
+        json.dump(books_dump,
+                  file,
+                  ensure_ascii=False,
+                  indent=4)
 
 
 if __name__ == "__main__":
