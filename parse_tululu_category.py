@@ -32,12 +32,9 @@ def parse_book_page(response):
     image_content = soup.select_one(image_selector)['src']
     image_url = urljoin(url, image_content)
 
-    comments_selector = ".texts span.black"
+    comments_selector = "#content .texts .black"
     comments_content = soup.select(comments_selector)
-    decoded_comments = [comment.string for comment in comments_content]
-    raw_comments = []
-    for comment in decoded_comments:
-        raw_comments.append(comment[-1])
+    decoded_comments = [comment.text for comment in comments_content]
     comments = "\n".join(decoded_comments)
     book_page = {
                  "title": book_title,
@@ -82,34 +79,34 @@ def download_txt(title, download_response, folder):
 def main():
     requests.packages.urllib3.disable_warnings(
         requests.packages.urllib3.exceptions.InsecureRequestWarning)
-    # parser = argparse.ArgumentParser(description='''This script allows you to
-    #         download books, covers, comments, as well as get information about
-    #         the book. To start, you must specify the start and end id of the
-    #         books from the site https://tululu.org/''')
-    # parser.add_argument('start_id', type=int,
-    #                     help='ID of the book to start parsing from')
-    # parser.add_argument('end_id', type=int,
-    #                     help='ID of the book to finish parsing from')
-    # args = parser.parse_args()
-    # start_args = args.start_id
-    # end_args = args.end_id
+    parser = argparse.ArgumentParser(description='''This script will download
+            fantasy books for you from https://tululu.org/''')
+    parser.add_argument('start_page', type=int,
+                        help='Start page to start parsing from')
+    parser.add_argument('end_page', nargs='?', type=int,
+                        help='End page to finish parsing from')
+    args = parser.parse_args()
+    start_page = args.start_page
+    end_page = args.end_page
     txt_folder = 'books/'
     image_folder = 'image/'
     comments_folder = 'comments/'
     books_dump = []
-    for page in range(1, 5):
-        while True:
-            try:
-                fantastic_url = f"https://tululu.org/l55/{page}"
-                download_url = "https://tululu.org/txt.php"
-                url = "https://tululu.org/"
-                response = requests.get(fantastic_url, verify=False)
-                response.raise_for_status()
-                soup = BeautifulSoup(response.text, 'lxml')
-                selector = ".d_book a[href^='/b']"
-                links = [content["href"] for content in soup.select(selector)]
-                page_links = list(OrderedDict.fromkeys(links))
-                for link in page_links:
+    if not end_page:
+        end_page = start_page + 1
+    while True:
+        for page in range(start_page, end_page):
+            fantastic_url = f"https://tululu.org/l55/{page}"
+            download_url = "https://tululu.org/txt.php"
+            url = "https://tululu.org/"
+            response = requests.get(fantastic_url, verify=False)
+            response.raise_for_status()
+            soup = BeautifulSoup(response.text, 'lxml')
+            selector = ".d_book a[href^='/b']"
+            links = [content["href"] for content in soup.select(selector)]
+            page_links = list(OrderedDict.fromkeys(links))
+            for link in page_links:
+                try:
                     book_number = int(str(link)[2:-1])
                     book_url = urljoin(url, link)
                     params = {
@@ -132,17 +129,17 @@ def main():
                                        book_number, comments_folder)
                     download_image(book_page['image_url'], image_folder)
                     books_dump.append(book_page)
-            except requests.exceptions.HTTPError:
-                print("Wrong url")
-            except requests.exceptions.ConnectionError:
-                time.sleep(10)
-            finally:
-                break
-    with open('books.json', 'a') as fp:
-        json.dump(books_dump,
-                  fp,
-                  ensure_ascii=False,
-                  indent=4)
+                except requests.exceptions.HTTPError:
+                    print("Wrong url")
+                    continue
+                except requests.exceptions.ConnectionError:
+                    time.sleep(10)
+                    continue
+        with open('books.json', 'a') as dump:
+            json.dump(books_dump,
+                      dump,
+                      ensure_ascii=False,
+                      indent=4)
 
 
 if __name__ == "__main__":
