@@ -10,6 +10,8 @@ import requests
 from bs4 import BeautifulSoup
 from pathvalidate import sanitize_filename
 
+from main import check_for_redirect, download_image, download_txt
+
 collections.Callable = collections.abc.Callable
 
 
@@ -46,28 +48,6 @@ def parse_book_page(response):
                  "comments": comments
                  }
     return book_page
-
-
-def check_for_redirect(page_response):
-    if page_response.history:
-        raise requests.exceptions.HTTPError()
-
-
-def download_image(image_url, folder):
-    os.makedirs(folder, exist_ok=True)
-    image_response = requests.get(image_url)
-    image_response.raise_for_status()
-    imagename = "".join(image_url.split('/')[-1])
-    imagepath = os.path.join(folder, imagename)
-    with open(imagepath, 'wb') as image:
-        image.write(image_response.content)
-
-
-def download_txt(title, download_response, folder):
-    os.makedirs(folder, exist_ok=True)
-    filepath = os.path.join(folder, title)
-    with open(filepath, 'w') as book:
-        book.write(download_response.text)
 
 
 def create_argparse():
