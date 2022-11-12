@@ -1,14 +1,16 @@
-import os
-import requests
-import time
 import argparse
 import collections
 import json
+import os
+import time
 from collections import OrderedDict
-from pathvalidate import sanitize_filename
-from bs4 import BeautifulSoup
-from urllib.parse import urljoin, urlencode
 from pathlib import Path
+from urllib.parse import urlencode, urljoin
+
+import requests
+from bs4 import BeautifulSoup
+from pathvalidate import sanitize_filename
+
 collections.Callable = collections.abc.Callable
 
 
