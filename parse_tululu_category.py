@@ -4,7 +4,7 @@ import json
 import os
 import time
 from pathlib import Path
-from urllib.parse import urlencode, urljoin
+from urllib.parse import urljoin
 
 import requests
 from bs4 import BeautifulSoup
@@ -122,7 +122,6 @@ def main():
             selector = ".d_book a[href^='/b']"
             links = [content["href"] for content in soup.select(selector)]
             page_links = list(dict.fromkeys(links))
-            print(page_links)
             for link in page_links:
                 try:
                     book_number = int(str(link)[2:-1])
@@ -132,9 +131,8 @@ def main():
                     }
                     book_response = requests.get(book_url, verify=False)
                     book_response.raise_for_status()
-                    encoded_params = urlencode(params)
                     download_response = requests.get(download_url,
-                                                     params=encoded_params,
+                                                     params=params,
                                                      verify=False)
                     download_response.raise_for_status()
                     check_for_redirect(book_response)
