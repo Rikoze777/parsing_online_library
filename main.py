@@ -14,27 +14,31 @@ collections.Callable = collections.abc.Callable
 def parse_book_page(response):
     url = response.url
     soup = BeautifulSoup(response.text, 'lxml')
-    soup_text = soup.find('body').find('h1')
-    content_text = soup_text.text
+
+    header_selector = ".ow_px_td h1"
+    header_content = soup.select_one(header_selector)
+    content_text = header_content.text
     content = [" ".join(text.split()) for text in content_text.split('::')]
-    title, author = content
-    title = sanitize_filename(title)
-    author = sanitize_filename(author)
-    soup_genres = soup.find_all('span', class_='d_book')
-    genres = [genre.text for genre in soup_genres]
-    book_genres = ":".join(genres).lstrip('Жанр книги:').strip()
-    soup_img = soup.find(class_='bookimage').find('img')['src']
-    image_url = urljoin(url, soup_img)
-    soup_comments = soup.find_all(class_='texts')
-    decoded_comments = [comment.text for comment in soup_comments]
-    raw_comments = []
-    for comment in decoded_comments:
-        comment = comment.split(')')
-        raw_comments.append(comment[-1])
-    comments = "\n".join(raw_comments)
+    book_title, book_author = content
+    book_title = sanitize_filename(book_title)
+    book_author = sanitize_filename(book_author)
+
+    genres_selector = "span.d_book a"
+    genres_content = soup.select(genres_selector)
+    genres = [genre.string for genre in genres_content]
+    book_genres = " : ".join(genres).lstrip('Жанр книги:').strip()
+
+    image_selector = "div.bookimage img"
+    image_content = soup.select_one(image_selector)['src']
+    image_url = urljoin(url, image_content)
+
+    comments_selector = "#content .texts .black"
+    comments_content = soup.select(comments_selector)
+    decoded_comments = [comment.text for comment in comments_content]
+    comments = "\n".join(decoded_comments)
     book_page = {
-                 "title": title,
-                 "author": author,
+                 "title": book_title,
+                 "author": book_author,
                  "genres": book_genres,
                  "image_url": image_url,
                  "comments": comments
