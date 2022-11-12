@@ -1,11 +1,13 @@
-import os
-import requests
-import time
-from pathvalidate import sanitize_filename
-from bs4 import BeautifulSoup
-from urllib.parse import urljoin, urlencode
 import argparse
 import collections
+import os
+import time
+from urllib.parse import urlencode, urljoin
+
+import requests
+from bs4 import BeautifulSoup
+from pathvalidate import sanitize_filename
+
 collections.Callable = collections.abc.Callable
 
 

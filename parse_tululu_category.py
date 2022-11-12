@@ -3,7 +3,6 @@ import collections
 import json
 import os
 import time
-from collections import OrderedDict
 from pathlib import Path
 from urllib.parse import urlencode, urljoin
 
@@ -122,7 +121,8 @@ def main():
             soup = BeautifulSoup(response.text, 'lxml')
             selector = ".d_book a[href^='/b']"
             links = [content["href"] for content in soup.select(selector)]
-            page_links = list(OrderedDict.fromkeys(links))
+            page_links = list(dict.fromkeys(links))
+            print(page_links)
             for link in page_links:
                 try:
                     book_number = int(str(link)[2:-1])
