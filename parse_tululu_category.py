@@ -115,6 +115,7 @@ def main():
                                                      params=params,
                                                      verify=False)
                     download_response.raise_for_status()
+                    check_for_redirect(response)
                     check_for_redirect(book_response)
                     check_for_redirect(download_response)
                     book_page = parse_book_page(book_response)
