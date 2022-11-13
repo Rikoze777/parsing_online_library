@@ -18,7 +18,7 @@ collections.Callable = collections.abc.Callable
 def create_argparse():
     parser = argparse.ArgumentParser(description='''This script will download
             fantasy books for you from https://tululu.org/''')
-    parser.add_argument('--start_page', type=int,
+    parser.add_argument('--start_page', type=int, default=1,
                         help='Start page to start parsing from')
     parser.add_argument('--end_page', nargs='?', type=int,
                         help='End page to finish parsing from')
