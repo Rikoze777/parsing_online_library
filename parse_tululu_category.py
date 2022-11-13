@@ -37,6 +37,8 @@ def create_argparse():
 def main():
     requests.packages.urllib3.disable_warnings(
         requests.packages.urllib3.exceptions.InsecureRequestWarning)
+    download_url = "https://tululu.org/txt.php"
+    url = "https://tululu.org/"
     parser = create_argparse()
     args = parser.parse_args()
     start_page = args.start_page
@@ -59,8 +61,6 @@ def main():
     for page in range(start_page, end_page):
         try:
             fantastic_url = f"https://tululu.org/l55/{page}"
-            download_url = "https://tululu.org/txt.php"
-            url = "https://tululu.org/"
             response = requests.get(fantastic_url, verify=False)
             response.raise_for_status()
             check_for_redirect(response)
@@ -71,33 +71,36 @@ def main():
         except requests.exceptions.HTTPError:
             print("Wrong url")
         except requests.exceptions.ConnectionError:
+            print("Connection error")
             time.sleep(10)
-        for link in page_links:
-            try:
-                book_number = int(str(link)[2:-1])
-                book_url = urljoin(url, link)
-                params = {
-                        "id": book_number,
-                }
-                book_response = requests.get(book_url, verify=False)
-                book_response.raise_for_status()
-                download_response = requests.get(download_url,
-                                                 params=params,
-                                                 verify=False)
-                download_response.raise_for_status()
-                check_for_redirect(book_response)
-                check_for_redirect(download_response)
-                book_page = parse_book_page(book_response)
-                if not skip_txt:
-                    download_txt(book_page['title'],
-                                 download_response, txt_folder)
-                if not skip_imgs:
-                    download_image(book_page['image_url'], image_folder)
-                books_dump.append(book_page)
-            except requests.exceptions.HTTPError:
-                print("Wrong url")
-            except requests.exceptions.ConnectionError:
-                time.sleep(10)
+        finally:
+            for link in page_links:
+                try:
+                    book_number = int(str(link)[2:-1])
+                    book_url = urljoin(url, link)
+                    params = {
+                            "id": book_number,
+                    }
+                    book_response = requests.get(book_url, verify=False)
+                    book_response.raise_for_status()
+                    download_response = requests.get(download_url,
+                                                     params=params,
+                                                     verify=False)
+                    download_response.raise_for_status()
+                    check_for_redirect(book_response)
+                    check_for_redirect(download_response)
+                    book_page = parse_book_page(book_response)
+                    if not skip_txt:
+                        download_txt(book_page['title'],
+                                     download_response, txt_folder)
+                    if not skip_imgs:
+                        download_image(book_page['image_url'], image_folder)
+                    books_dump.append(book_page)
+                except requests.exceptions.HTTPError:
+                    print("Wrong url")
+                except requests.exceptions.ConnectionError:
+                    print("Connection error")
+                    time.sleep(10)
     json_path = os.path.join(json_folder, "books_dump.json")
     with open(json_path, 'w') as file:
         json.dump(books_dump,
