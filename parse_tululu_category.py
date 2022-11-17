@@ -93,6 +93,10 @@ def main():
                     if not skip_txt:
                         download_txt(book_page['title'],
                                      download_response, txt_folder)
+                        book_path = os.path.join(dest_folder,
+                                                 "/books",
+                                                 f"{book_page['title']}.txt")
+                        book_page['book_path'] = book_path
                     if not skip_imgs:
                         download_image(book_page['image_url'], image_folder)
                     books_dump.append(book_page)
