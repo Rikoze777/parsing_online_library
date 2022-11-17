@@ -34,4 +34,4 @@ if __name__ == "__main__":
 
     server = Server()
     server.watch("template.html", on_load)
-    server.serve(root='./pages')
+    server.serve(root="pages")
