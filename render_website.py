@@ -13,9 +13,8 @@ def on_load():
     )
     template = env.get_template('template.html')
     with open("books_dump.json", "r") as my_file:
-        books_json = my_file.read()
+        books = json.load(my_file)
 
-    books = json.loads(books_json)
     books_per_page = 10
     books_chunked = list(chunked(books, books_per_page))
     pages_count = len(books_chunked)
