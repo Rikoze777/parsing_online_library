@@ -48,14 +48,8 @@ def main():
     skip_txt = args.skip_txt
     json_folder = args.json_path
     books_dump = []
-    txt_folder = Path(dest_folder, 'books/')
-    image_folder = Path(dest_folder, 'images/')
     if json_folder:
         os.makedirs(json_folder, exist_ok=True)
-    if not skip_imgs:
-        image_folder.mkdir(parents=True, exist_ok=True)
-    if not skip_txt:
-        txt_folder.mkdir(parents=True, exist_ok=True)
     if not end_page:
         end_page = start_page + 1
     for page in range(start_page, end_page):
@@ -91,14 +85,14 @@ def main():
                     check_for_redirect(download_response)
                     book_page = parse_book_page(book_response)
                     if not skip_txt:
-                        download_txt(book_page['title'],
-                                     download_response, txt_folder)
-                        book_path = os.path.join(dest_folder,
-                                                 "/books",
-                                                 f"{book_page['title']}.txt")
+                        book_path = download_txt(book_page['title'],
+                                                 download_response,
+                                                 dest_folder)
                         book_page['book_path'] = book_path
                     if not skip_imgs:
-                        download_image(book_page['image_url'], image_folder)
+                        image_path = download_image(book_page['image_url'],
+                                                    dest_folder)
+                        book_page['img_src'] = image_path
                     books_dump.append(book_page)
                 except requests.exceptions.HTTPError:
                     print("Wrong url")
