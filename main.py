@@ -2,6 +2,7 @@ import argparse
 import collections
 import os
 import time
+from pathlib import Path
 from urllib.parse import urlencode, urljoin
 
 import requests
@@ -24,9 +25,8 @@ def parse_book_page(response):
     book_author = sanitize_filename(book_author)
 
     genres_selector = "span.d_book a"
-    genres_content = soup.select(genres_selector)
-    genres = [genre.string for genre in genres_content]
-    book_genres = " : ".join(genres).lstrip('Жанр книги:').strip()
+    book_genres = soup.select(genres_selector)
+    genres = [genre.text for genre in book_genres]
 
     image_selector = "div.bookimage img"
     image_content = soup.select_one(image_selector)['src']
@@ -39,7 +39,7 @@ def parse_book_page(response):
     book_page = {
                  "title": book_title,
                  "author": book_author,
-                 "genres": book_genres,
+                 "genres": genres,
                  "image_url": image_url,
                  "comments": comments
                  }
@@ -59,21 +59,26 @@ def fetch_comments(comments, book_number, folder):
         file.write(comments)
 
 
-def download_image(image_url, folder):
-    os.makedirs(folder, exist_ok=True)
+def download_image(image_url, dest_folder='', folder="images",):
+    dest_folder = os.path.join(dest_folder, folder)
+    Path(dest_folder).mkdir(parents=True, exist_ok=True)
     image_response = requests.get(image_url)
     image_response.raise_for_status()
     imagename = "".join(image_url.split('/')[-1])
     imagepath = os.path.join(folder, imagename)
     with open(imagepath, 'wb') as image:
         image.write(image_response.content)
+    return imagepath
 
 
-def download_txt(title, download_response, folder):
-    os.makedirs(folder, exist_ok=True)
-    filepath = os.path.join(folder, title)
+def download_txt(title, download_response, dest_folder='', folder='books'):
+    dest_folder = os.path.join(dest_folder, folder)
+    Path(dest_folder).mkdir(parents=True, exist_ok=True)
+    bookname = sanitize_filename(title).strip()
+    filepath = os.path.join(folder, f"{bookname}.txt")
     with open(filepath, 'w') as book:
         book.write(download_response.text)
+    return filepath
 
 
 def main():
@@ -115,7 +120,9 @@ def main():
                 if book_page['comments']:
                     fetch_comments(book_page['comments'],
                                    book_number, comments_folder)
-                download_image(book_page['image_url'], image_folder)
+                download_image(book_page['image_url'],
+                               image_folder,
+                               book_number)
                 print("Заголовок: ", book_page['title'])
                 print("Автор: ", book_page['author'])
                 print("Жанр: ", book_page['genres'])
